@@ -1,38 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
-import { ArrowLeft, Clock, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Clock, CheckCircle2, XCircle, ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { messageApi, type MessageHistoryResponse, MessageHistoryResponseStatusEnum } from "@/lib/api";
 
-const MOCK_HISTORY = [
-    {
-        id: "h1", date: "오늘 14:30", type: "장소 변경", recipients: "홍길동 외 2명", status: "success",
-        preview: "오늘 진행되는 초보자를 위한...",
-        fullText: "[긴급 안내]\n\n오늘 진행되는 초보자를 위한 베이킹 클래스 수업 장소가 변경되었습니다.\n\n-변경 전: **서울특별시 강남구 서초동 123-45 (아트타워 3층)**\n-변경 후: **서울특별시 마포구 연남동 456-78 (베이킹 스튜디오 2층)**\n\n자세한 위치는 클래스 링크에서 확인해주세요."
-    },
-    {
-        id: "h2", date: "오늘 09:00", type: "자동 알림", recipients: "전체(4명)", status: "success",
-        preview: "결제가 완료되었습니다. 클래스...",
-        fullText: "[Class Hub]\n결제가 완료되었습니다.\n\n클래스명: 초보자를 위한 베이킹 클래스\n결제금액: 50,000원\n\n클래스 링크를 통해 상세 정보를 확인하세요."
-    },
-    {
-        id: "h3", date: "어제 18:15", type: "시간 변경", recipients: "홍기삼", status: "fail",
-        preview: "10:00 수업 시작 시간이 변경...",
-        fullText: "[긴급 안내]\n\n프랑스 자수 원데이 클래스 수업 시작 시간이 변경되었습니다.\n\n-기존: **10:00**\n-변경: **11:00**\n\n참고 부탁드립니다."
-    },
-    {
-        id: "h4", date: "어제 10:00", type: "D-1 리마인더", recipients: "전체(4명)", status: "success",
-        preview: "내일 클래스가 시작됩니다! 준...",
-        fullText: "[리마인더]\n내일 클래스가 시작됩니다!\n\n준비물: 앞치마, 필기도구\n지각 시 입장이 제한될 수 있으니 10분 전까지 도착 부탁드립니다."
-    },
-];
 
 export default function MessageHistoryPage() {
     const router = useRouter();
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [history, setHistory] = useState<MessageHistoryResponse[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const toggleExpand = (id: string) => {
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const data = await messageApi.getMyMessageHistory();
+                setHistory(data);
+            } catch (error) {
+                console.error("Failed to fetch message history:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistory();
+    }, []);
+
+    const toggleExpand = (id: number) => {
         setExpandedId(expandedId === id ? null : id);
     };
 
@@ -62,67 +58,103 @@ export default function MessageHistoryPage() {
 
             {/* List Content - Compact & Horizontal */}
             <div className="space-y-3">
-                {MOCK_HISTORY.map((item) => {
-                    const isExpanded = expandedId === item.id;
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
+                        <Loader2 className="w-8 h-8 text-[#3182F6] animate-spin mb-4" />
+                        <p className="text-[#8B95A1] font-medium">발송 이력을 불러오는 중입니다...</p>
+                    </div>
+                ) : history.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
+                        <p className="text-[#8B95A1] font-medium text-[15px]">발송 이력이 없습니다.</p>
+                    </div>
+                ) : (
+                    history.map((item) => {
+                        const isExpanded = expandedId === item.id;
 
-                    return (
-                        <div
-                            key={item.id}
-                            onClick={() => toggleExpand(item.id)}
-                            className={`py-4 px-5 rounded-xl border transition-all cursor-pointer group flex flex-col gap-2 ${isExpanded ? 'border-[#3182F6]/40 bg-[#F9FAFB] shadow-sm' : 'border-gray-100 bg-white hover:border-[#3182F6]/30 hover:shadow-sm'
-                                }`}
-                        >
-                            {/* Collapsed Header Line */}
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3 md:gap-4 overflow-hidden flex-1">
-                                    {/* Type */}
-                                    <span className="shrink-0 px-2.5 py-1 bg-[#F2F4F6] text-[#4E5968] text-[12px] font-semibold rounded-md">
-                                        {item.type}
-                                    </span>
+                        // Format date securely
+                        const dateObj = item.completedAt || item.requestedAt;
+                        const dateStr = dateObj ? new Date(dateObj).toLocaleString('ko-KR', {
+                            month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                        }).replace(' ', '') : '날짜 없음';
 
-                                    {/* Recipient */}
-                                    <span className="shrink-0 text-[#191F28] text-[14px] font-bold">
-                                        {item.recipients}
-                                    </span>
+                        // Format recipient securely
+                        const formatPhone = (phone?: string) => {
+                            if (!phone) return '번호없음';
+                            const cleaned = phone.replace(/\D/g, '');
+                            if (cleaned.length === 11) {
+                                return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
+                            }
+                            if (cleaned.length === 10) {
+                                return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                            }
+                            return phone;
+                        };
+                        const receiver = item.receiverName ? `${item.receiverName} (${formatPhone(item.receiverPhone)})` : '수신자 불명';
 
-                                    {/* Preview text */}
-                                    <span className="truncate text-[#8B95A1] text-[14px] leading-snug">
-                                        {item.preview}
-                                    </span>
-                                </div>
+                        // Preview logic
+                        const previewStr = item.content ? (item.content.length > 20 ? item.content.slice(0, 20) + '...' : item.content) : '내용 없음';
 
-                                {/* Right side information */}
-                                <div className="flex items-center gap-4 shrink-0">
-                                    {/* Date */}
-                                    <span className="text-[#8B95A1] text-[13px] font-medium hidden sm:block">
-                                        {item.date}
-                                    </span>
+                        return (
+                            <div
+                                key={item.id}
+                                onClick={() => toggleExpand(item.id!)}
+                                className={`py-4 px-5 rounded-xl border transition-all cursor-pointer group flex flex-col gap-2 ${isExpanded ? 'border-[#3182F6]/40 bg-[#F9FAFB] shadow-sm' : 'border-gray-100 bg-white hover:border-[#3182F6]/30 hover:shadow-sm'
+                                    }`}
+                            >
+                                {/* Collapsed Header Line */}
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3 md:gap-4 overflow-hidden flex-1">
+                                        {/* Type */}
+                                        <span className="shrink-0 px-2.5 py-1 bg-[#F2F4F6] text-[#4E5968] text-[12px] font-semibold rounded-md">
+                                            {item.templateTitle || item.templateType || '알림'}
+                                        </span>
 
-                                    {/* Status */}
-                                    <div className="w-[60px] flex justify-end">
-                                        {item.status === 'success' ? (
-                                            <span className="text-[#3182F6] font-semibold text-[13px]">발송성공</span>
-                                        ) : (
-                                            <span className="text-[#F04452] font-semibold text-[13px]">발송실패</span>
-                                        )}
+                                        {/* Recipient */}
+                                        <span className="shrink-0 text-[#191F28] text-[14px] font-bold">
+                                            {receiver}
+                                        </span>
+
+                                        {/* Preview text */}
+                                        <span className="truncate text-[#8B95A1] text-[14px] leading-snug">
+                                            {previewStr}
+                                        </span>
                                     </div>
 
-                                    {/* Chevron */}
-                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                    {/* Right side information */}
+                                    <div className="flex items-center gap-4 shrink-0">
+                                        {/* Date */}
+                                        <span className="text-[#8B95A1] text-[13px] font-medium hidden sm:block">
+                                            {dateStr}
+                                        </span>
+
+                                        {/* Status */}
+                                        <div className="w-[60px] flex justify-end">
+                                            {item.status === MessageHistoryResponseStatusEnum.Sent ? (
+                                                <span className="text-[#3182F6] font-semibold text-[13px]">발송성공</span>
+                                            ) : item.status === MessageHistoryResponseStatusEnum.Failed ? (
+                                                <span className="text-[#F04452] font-semibold text-[13px]">발송실패</span>
+                                            ) : (
+                                                <span className="text-gray-500 font-semibold text-[13px]">발송대기</span>
+                                            )}
+                                        </div>
+
+                                        {/* Chevron */}
+                                        <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                    </div>
                                 </div>
+
+                                {/* Expanded Body */}
+                                {isExpanded && (
+                                    <div className="mt-3 pt-3 border-t border-gray-100/60 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="whitespace-pre-wrap bg-gray-50 p-5 rounded-xl border border-gray-100/50 shadow-inner text-[14px] leading-relaxed text-[#4E5968]">
+                                            {item.content || '내용이 없습니다.'}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-
-                            {/* Expanded Body */}
-                            {isExpanded && (
-                                <div className="mt-3 pt-3 border-t border-gray-100/60 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <div className="whitespace-pre-wrap bg-gray-50 p-5 rounded-xl border border-gray-100/50 shadow-inner text-[14px] leading-relaxed text-[#4E5968]">
-                                        {item.fullText}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                        );
+                    })
+                )}
             </div>
         </div>
     );

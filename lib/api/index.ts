@@ -23,8 +23,8 @@ import {
 import { LocalAuthApi } from './LocalAuthApi';
 import { UploadImageApi } from './UploadImageApi';
 import { apiConfig } from './config/generated-client';
-import { InstructorApi, AdminControllerApi, MessageTemplateApi, OnedayClassApi, SessionApi, MemberApi, ReservationApi } from './generated';
-export { type InstructorAdminResponse, type MessageTemplateMetadata, type MessageTemplateResponse, MessageTemplateResponseTypeEnum, type OnedayClassResponse, type SessionResponse, type LocalTime, type ReservationResponse, type MemberResponseDto } from './generated';
+import { InstructorApi, AdminControllerApi, MessageTemplateApi, OnedayClassApi, SessionApi, MemberApi, ReservationApi, MessageApi } from './generated';
+export { type InstructorAdminResponse, type MessageTemplateMetadata, type MessageTemplateResponse, MessageTemplateResponseTypeEnum, type OnedayClassResponse, type SessionResponse, type LocalTime, type ReservationResponse, type MemberResponseDto, ManualMessageRequestTemplateTypeEnum, type MessageHistoryResponse, MessageHistoryResponseStatusEnum } from './generated';
 export type { UploadResult } from './UploadImageApi';
 export type { GetTemplateRequest } from './generated';
 
@@ -42,6 +42,7 @@ export const sessionApi = USE_MOCK ? sessionApiMock : new SessionApi(apiConfig);
 export const memberApi = USE_MOCK ? memberApiMock : new MemberApi(apiConfig);
 export const reservationApi = USE_MOCK ? reservationApiMock : new ReservationApi(apiConfig);
 export const messageTemplateApi = USE_MOCK ? messageTemplateApiMock : new MessageTemplateApi(apiConfig);
+export const messageApi = USE_MOCK ? ({} as any) : new MessageApi(apiConfig);
 
 
 export const authApi: AuthServiceInterface = USE_MOCK ? authApiMock : new LocalAuthApi(apiConfig);
@@ -77,6 +78,7 @@ export const api = {
   member: memberApi,
   reservation: reservationApi,
   messageTemplate: messageTemplateApi,
+  message: messageApi,
   auth: authApi,
   instructor: instructorApi,
   admin: adminControllerApi,

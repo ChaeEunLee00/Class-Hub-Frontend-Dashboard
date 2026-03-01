@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronRight, AlertCircle, RefreshCw, Clock, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { messageTemplateApi, type MessageTemplateMetadata, MessageTemplateResponseTypeEnum } from "@/lib/api";
+import { messageTemplateApi, messageApi, onedayClassApi, sessionApi, reservationApi, type MessageTemplateMetadata, MessageTemplateResponseTypeEnum, ManualMessageRequestTemplateTypeEnum, type OnedayClassResponse, type SessionResponse, type ReservationResponse } from "@/lib/api";
 import { KakaoTemplatePreview } from "@/components/dashboard/KakaoTemplatePreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -19,26 +19,25 @@ import { AddressSearchInput } from "@/components/ui/AddressSearchInput";
 import { TimeSelector } from "@/components/ui/TimeSelector";
 import { toast } from "sonner";
 
-const MOCK_STUDENTS = [
-    { id: "s1", name: "홍길동" },
-    { id: "s2", name: "홍길이" },
-    { id: "s3", name: "홍기삼" },
-    { id: "s4", name: "홍기사" },
-];
-
 export default function MessagesPage() {
     const [templates, setTemplates] = useState<MessageTemplateMetadata[]>([]);
+    const [manualTemplates, setManualTemplates] = useState<MessageTemplateMetadata[]>([]);
+    const [recipientOpen, setRecipientOpen] = useState(false);
     const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
     const [detailsCache, setDetailsCache] = useState<Record<string, { type?: MessageTemplateResponseTypeEnum, body?: string }>>({});
     const [loading, setLoading] = useState(true);
+
+    const [classes, setClasses] = useState<OnedayClassResponse[]>([]);
+    const [sessions, setSessions] = useState<SessionResponse[]>([]);
+    const [reservations, setReservations] = useState<ReservationResponse[]>([]);
 
     // Emergency Message State
     const [emClass, setEmClass] = useState<string>("");
     const [emSession, setEmSession] = useState<string>("");
     const [emSituation, setEmSituation] = useState<string>("");
-    const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>(MOCK_STUDENTS.map(s => s.id));
+    const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
-    const isAllSelected = selectedStudentIds.length === MOCK_STUDENTS.length;
+    const isAllSelected = reservations.length > 0 && selectedStudentIds.length === reservations.length;
 
     // Dynamic Inputs State
     const [emLocBefore, setEmLocBefore] = useState<string>("");
@@ -53,66 +52,145 @@ export default function MessagesPage() {
     const [activeTab, setActiveTab] = useState<"automated" | "emergency">("emergency");
 
     const getClassName = () => {
-        if (emClass === "class1") return "초보자를 위한 베이킹 클래스";
-        if (emClass === "class2") return "프랑스 자수 원데이 클래스";
-        return "{클래스명}";
+        const cls = classes.find(c => String(c.id) === emClass);
+        return cls ? (cls.name || "{클래스명}") : "{클래스명}";
     };
+
+    const emType = emSituation ? detailsCache[emSituation]?.type : null;
+
+    // Auto-fill existing location or time when the template type changes
+    useEffect(() => {
+        if (!emType) return;
+        if (emType === MessageTemplateResponseTypeEnum.ManualLocChg && emClass) {
+            const cls = classes.find(c => String(c.id) === emClass);
+            if (cls) {
+                setEmLocBefore(cls.location || "");
+                setEmLocBeforeDetail(cls.locationDetails || "");
+            }
+        } else if (emType === MessageTemplateResponseTypeEnum.ManualTimeChg && emSession) {
+            const sess = sessions.find(s => String(s.id) === emSession);
+            if (sess && sess.startTime) {
+                setEmTimeBefore(sess.startTime);
+            }
+        }
+    }, [emType, emClass, emSession, classes, sessions]);
 
     const emergencyPreviewText = useMemo(() => {
         const className = getClassName();
 
-        switch (emSituation) {
-            case 'location':
-                const beforeLocation = emLocBefore || '기존 장소';
-                const beforeDetail = emLocBeforeDetail ? ` (${emLocBeforeDetail})` : '';
-                const locationText = emLocAfter || '변경 장소';
-                const detailText = emLocDetail ? ` (${emLocDetail})` : '';
-                return `[긴급 안내]\n\n오늘 진행되는 ${className} 수업 장소가 변경되었습니다.\n\n-변경 전: **${beforeLocation}${beforeDetail}**\n-변경 후: **${locationText}${detailText}**\n\n자세한 위치는 클래스 링크에서 확인해주세요.`;
-            case 'time':
-                return `[긴급 안내]\n\n${className} 수업 시작 시간이 변경되었습니다.\n\n-기존: **${emTimeBefore || '기존 시간'}**\n-변경: **${emTimeAfter || '변경 시간'}**\n\n참고 부탁드립니다.`;
-            case 'delay':
-                return `[긴급 안내]\n\n강사 도착 지연으로 인해 ${className} 수업이 약 **${emDelayMin || '?'}**분 늦게 시작될 예정입니다.\n\n양해 부탁드립니다.`;
-            case 'cancel':
-                return `[긴급 안내]\n\n금일 예정된 ${className} 수업이 부득이한 사정으로 취소되었습니다.\n\n환불 및 후속 안내는 클래스 링크를 통해 진행됩니다.\n\n**-환불 관련하여 논의하기**`;
-            default:
-                return "상황 종류를 선택하면\n미리보기가 표시됩니다.";
-        }
-    }, [emSituation, emClass, emLocBefore, emLocBeforeDetail, emLocAfter, emLocDetail, emTimeBefore, emTimeAfter, emDelayMin]);
+        if (!emSituation || !emType) return "알림 유형을 선택하면\n미리보기가 표시됩니다.";
 
-    // Auto-populate location based on class selection
+        const bodyRaw = detailsCache[emSituation]?.body;
+        if (!bodyRaw) return "템플릿을 불러오는 중입니다...";
+
+        let body = bodyRaw.replace(/#\{className\}/g, className);
+
+        switch (emType) {
+            case MessageTemplateResponseTypeEnum.ManualLocChg:
+                body = body.replace(/#\{locBefore\}/g, emLocBefore || '기존 장소');
+                body = body.replace(/#\{locBeforeDetail\}/g, emLocBeforeDetail ? ` (${emLocBeforeDetail})` : '');
+                body = body.replace(/#\{locAfter\}/g, emLocAfter || '변경 장소');
+                body = body.replace(/#\{locDetail\}/g, emLocDetail ? ` (${emLocDetail})` : '');
+                break;
+            case MessageTemplateResponseTypeEnum.ManualTimeChg:
+                body = body.replace(/#\{timeBefore\}/g, emTimeBefore || '기존 시간');
+                body = body.replace(/#\{timeAfter\}/g, emTimeAfter || '변경 시간');
+                break;
+            case MessageTemplateResponseTypeEnum.ManualDelay:
+                body = body.replace(/#\{delayMin\}/g, emDelayMin || '?');
+                break;
+            case MessageTemplateResponseTypeEnum.ManualCancel:
+                // No extra variables
+                break;
+        }
+        return body;
+    }, [emSituation, emType, emClass, emLocBefore, emLocBeforeDetail, emLocAfter, emLocDetail, emTimeBefore, emTimeAfter, emDelayMin, detailsCache]);
+
+    const isFormValid = () => {
+        if (!emClass || !emSession || !emSituation || !emType) return false;
+        if (selectedStudentIds.length === 0) return false;
+
+        if (emType === MessageTemplateResponseTypeEnum.ManualLocChg) {
+            return !!emLocAfter;
+        }
+        if (emType === MessageTemplateResponseTypeEnum.ManualTimeChg) {
+            return !!emTimeAfter;
+        }
+        if (emType === MessageTemplateResponseTypeEnum.ManualDelay) {
+            return !!emDelayMin;
+        }
+        return true;
+    };
+
+    // Fetch Classes
     useEffect(() => {
-        if (emClass === "class1") {
-            setEmLocBefore("서울특별시 강남구 서초동 123-45");
-            setEmLocBeforeDetail("아트타워 3층");
-        } else if (emClass === "class2") {
-            setEmLocBefore("서울특별시 성동구 성수동 2가 31-1");
-            setEmLocBeforeDetail("그린빌딩 502호");
+        const fetchClasses = async () => {
+            try {
+                const res = await onedayClassApi.getMyClasses();
+                setClasses(res);
+            } catch (error) {
+                console.error("Failed to fetch classes", error);
+            }
+        };
+        fetchClasses();
+    }, []);
+
+    // Fetch Sessions when Class is selected
+    useEffect(() => {
+        setEmSession(""); // Reset session when class changes
+        if (emClass) {
+            const fetchSessions = async () => {
+                try {
+                    const res = await onedayClassApi.getUpcomingSessions({ classId: Number(emClass) });
+                    setSessions(res);
+                } catch (error) {
+                    console.error("Failed to fetch sessions", error);
+                }
+            };
+            fetchSessions();
         } else {
-            setEmLocBefore("");
-            setEmLocBeforeDetail("");
+            setSessions([]);
+            setEmSession("");
         }
     }, [emClass]);
 
-    // Auto-populate time based on session selection
+    // Fetch Reservations when Session is selected
     useEffect(() => {
-        if (emSession === "session1") {
-            setEmTimeBefore("14:00");
-        } else if (emSession === "session2") {
-            setEmTimeBefore("10:00");
+        if (emSession) {
+            const fetchReservations = async () => {
+                try {
+                    const res = await reservationApi.getReservations({ sessionId: Number(emSession) });
+                    setReservations(res);
+                    setSelectedStudentIds(res.map(r => String(r.reservationId)));
+                } catch (error) {
+                    console.error("Failed to fetch reservations", error);
+                }
+            };
+            fetchReservations();
         } else {
-            setEmTimeBefore("");
+            setReservations([]);
+            setSelectedStudentIds([]);
         }
     }, [emSession]);
 
     useEffect(() => {
         const fetchTemplates = async () => {
             try {
-                const list = await messageTemplateApi.getTemplates();
-                setTemplates(list);
-                if (list.length > 0 && list[0].title) {
-                    setSelectedTitle(list[0].title);
-                    handleFetchDetails(list[0].title);
+                const [autoList, manualList] = await Promise.all([
+                    messageTemplateApi.getTemplates({ type: "auto" }),
+                    messageTemplateApi.getTemplates({ type: "manual" })
+                ]);
+
+                setTemplates(autoList);
+                if (autoList.length > 0 && autoList[0].title) {
+                    setSelectedTitle(autoList[0].title);
+                    handleFetchDetails(autoList[0].title);
                 }
+
+                setManualTemplates(manualList);
+                manualList.forEach(t => {
+                    if (t.title) handleFetchDetails(t.title);
+                });
             } catch (error) {
                 console.error("Failed to fetch templates", error);
             } finally {
@@ -315,40 +393,66 @@ export default function MessagesPage() {
                                         <div className="space-y-1.5">
                                             <Label className="text-xs font-semibold text-[#8B95A1]">클래스</Label>
                                             <Select value={emClass} onValueChange={setEmClass}>
-                                                <SelectTrigger className="rounded-xl border-gray-200">
+                                                <SelectTrigger className="rounded-xl border-gray-200 text-[#191F28]">
                                                     <SelectValue placeholder="클래스 선택" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="class1">초보자를 위한 베이킹 클래스</SelectItem>
-                                                    <SelectItem value="class2">프랑스 자수 원데이 클래스</SelectItem>
+                                                    {classes.map(cls => (
+                                                        <SelectItem key={cls.id} value={String(cls.id)}>{cls.name}</SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label className="text-xs font-semibold text-[#8B95A1]">세션</Label>
-                                            <Select value={emSession} onValueChange={setEmSession}>
-                                                <SelectTrigger className="rounded-xl border-gray-200">
+                                            <Select
+                                                value={emSession}
+                                                onValueChange={setEmSession}
+                                                open={emClass && sessions.length > 0 ? undefined : false}
+                                            >
+                                                <SelectTrigger className={`rounded-xl border-gray-200 ${(!emClass || sessions.length === 0) ? 'pointer-events-none text-gray-400' : 'text-[#191F28]'}`}>
                                                     <SelectValue placeholder="세션 선택" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="session1">10/24 (목) 14:00</SelectItem>
-                                                    <SelectItem value="session2">10/25 (금) 10:00</SelectItem>
+                                                    {sessions.map(s => {
+                                                        const dt = s.date ? new Date(s.date) : null;
+                                                        const dayOfWeek = dt ? ['일', '월', '화', '수', '목', '금', '토'][dt.getDay()] : '';
+                                                        const dateStr = dt ? `${dt.getMonth() + 1}/${dt.getDate()}(${dayOfWeek})` : '';
+
+                                                        const formatTime = (timeStr?: string) => {
+                                                            if (!timeStr) return '';
+                                                            const parts = timeStr.split(':');
+                                                            if (parts.length < 2) return timeStr;
+                                                            const h = parseInt(parts[0], 10);
+                                                            const m = parts[1];
+                                                            const ampm = h < 12 ? '오전' : '오후';
+                                                            const hour12 = h % 12 || 12;
+                                                            return `${ampm} ${hour12}:${m}`;
+                                                        };
+                                                        const timeStr = formatTime(s.startTime);
+
+                                                        return (
+                                                            <SelectItem key={s.id} value={String(s.id)}>
+                                                                {dateStr} {timeStr}
+                                                            </SelectItem>
+                                                        );
+                                                    })}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label className="text-xs font-semibold text-[#8B95A1]">수신자 대상</Label>
-                                            <Popover>
+                                            <Popover open={emSession && reservations.length > 0 ? recipientOpen : false} onOpenChange={setRecipientOpen}>
                                                 <PopoverTrigger asChild>
-                                                    <Button variant="outline" className="w-full justify-between rounded-xl border-gray-200 font-medium px-4 h-10">
+                                                    <Button variant="outline" className={`w-full justify-between rounded-xl border-gray-200 font-medium px-4 h-10 ${(!emSession || reservations.length === 0) ? 'pointer-events-none text-gray-400' : 'text-[#191F28]'}`}>
                                                         <span className="truncate">
                                                             {isAllSelected
-                                                                ? `전체 (${MOCK_STUDENTS.length}명)`
+                                                                ? `전체 (${reservations.length}명)`
                                                                 : selectedStudentIds.length === 0
                                                                     ? "수신자 선택"
                                                                     : selectedStudentIds.length === 1
-                                                                        ? MOCK_STUDENTS.find(s => s.id === selectedStudentIds[0])?.name
-                                                                        : `${MOCK_STUDENTS.find(s => s.id === selectedStudentIds[0])?.name} 외 ${selectedStudentIds.length - 1}명`
+                                                                        ? reservations.find(s => String(s.reservationId) === selectedStudentIds[0])?.applicantName
+                                                                        : `${reservations.find(s => String(s.reservationId) === selectedStudentIds[0])?.applicantName} 외 ${selectedStudentIds.length - 1}명`
                                                             }
                                                         </span>
                                                         <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
@@ -356,54 +460,55 @@ export default function MessagesPage() {
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-60 p-2" align="start">
                                                     <div className="space-y-1">
-                                                        <button
+                                                        <div
                                                             onClick={() => {
                                                                 if (isAllSelected) setSelectedStudentIds([]);
-                                                                else setSelectedStudentIds(MOCK_STUDENTS.map(s => s.id));
+                                                                else setSelectedStudentIds(reservations.map(s => String(s.reservationId)));
                                                             }}
-                                                            className="flex items-center w-full px-2 py-2 hover:bg-gray-50 rounded-lg transition-colors group"
+                                                            className="flex items-center w-full px-2 py-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer group"
                                                         >
                                                             <Checkbox
                                                                 checked={isAllSelected}
                                                                 onCheckedChange={() => {
                                                                     if (isAllSelected) setSelectedStudentIds([]);
-                                                                    else setSelectedStudentIds(MOCK_STUDENTS.map(s => s.id));
+                                                                    else setSelectedStudentIds(reservations.map(s => String(s.reservationId)));
                                                                 }}
                                                                 className="mr-3 border-gray-300 pointer-events-none"
                                                             />
                                                             <span className={`text-sm font-bold ${isAllSelected ? 'text-[#191F28]' : 'text-[#8B95A1]'}`}>전체 선택</span>
-                                                        </button>
+                                                        </div>
                                                         <div className="h-px bg-gray-100 my-1 mx-2"></div>
                                                         <div className="max-h-48 overflow-y-auto space-y-1 px-1">
-                                                            {MOCK_STUDENTS.map((student) => {
-                                                                const isChecked = selectedStudentIds.includes(student.id);
+                                                            {reservations.map((student) => {
+                                                                const studentIdStr = String(student.reservationId);
+                                                                const isChecked = selectedStudentIds.includes(studentIdStr);
                                                                 return (
-                                                                    <button
-                                                                        key={student.id}
+                                                                    <div
+                                                                        key={student.reservationId}
                                                                         onClick={() => {
                                                                             if (isChecked) {
-                                                                                setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
+                                                                                setSelectedStudentIds(prev => prev.filter(id => id !== studentIdStr));
                                                                             } else {
-                                                                                setSelectedStudentIds(prev => [...prev, student.id]);
+                                                                                setSelectedStudentIds(prev => [...prev, studentIdStr]);
                                                                             }
                                                                         }}
-                                                                        className="flex items-center w-full px-2 py-2 hover:bg-gray-50 rounded-lg transition-colors"
+                                                                        className="flex items-center w-full px-2 py-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
                                                                     >
                                                                         <Checkbox
                                                                             checked={isChecked}
                                                                             onCheckedChange={() => {
                                                                                 if (isChecked) {
-                                                                                    setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
+                                                                                    setSelectedStudentIds(prev => prev.filter(id => id !== studentIdStr));
                                                                                 } else {
-                                                                                    setSelectedStudentIds(prev => [...prev, student.id]);
+                                                                                    setSelectedStudentIds(prev => [...prev, studentIdStr]);
                                                                                 }
                                                                             }}
                                                                             className="mr-3 border-gray-300 pointer-events-none"
                                                                         />
                                                                         <span className={`text-sm font-medium ${isChecked ? 'text-[#191F28]' : 'text-[#8B95A1]'}`}>
-                                                                            {student.name}
+                                                                            {student.applicantName}
                                                                         </span>
-                                                                    </button>
+                                                                    </div>
                                                                 );
                                                             })}
                                                         </div>
@@ -430,17 +535,28 @@ export default function MessagesPage() {
                                                 <SelectValue placeholder="어떤 내용을 알릴까요?" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="location">📍 장소 변경</SelectItem>
-                                                <SelectItem value="time">⏰ 시간 변경</SelectItem>
-                                                <SelectItem value="delay">⏳ 시작 지연</SelectItem>
-                                                <SelectItem value="cancel">❌ 수업 취소</SelectItem>
+                                                {manualTemplates.map(t => {
+                                                    if (!t.title) return null;
+                                                    const tType = detailsCache[t.title]?.type;
+                                                    let icon = '✉️';
+                                                    if (tType === MessageTemplateResponseTypeEnum.ManualLocChg) icon = '📍';
+                                                    else if (tType === MessageTemplateResponseTypeEnum.ManualTimeChg) icon = '⏰';
+                                                    else if (tType === MessageTemplateResponseTypeEnum.ManualDelay) icon = '⏳';
+                                                    else if (tType === MessageTemplateResponseTypeEnum.ManualCancel) icon = '❌';
+
+                                                    return (
+                                                        <SelectItem key={t.title} value={t.title}>
+                                                            {icon} {t.title}
+                                                        </SelectItem>
+                                                    );
+                                                })}
                                             </SelectContent>
                                         </Select>
                                     </div>
 
                                     {/* Dynamic Inputs based on situation */}
                                     <div className="space-y-3 pt-2">
-                                        {emSituation === 'location' && (
+                                        {emType === MessageTemplateResponseTypeEnum.ManualLocChg && (
                                             <div className="grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <div className="space-y-1.5">
                                                     <Label className="text-xs font-semibold text-[#8B95A1]">기존 장소</Label>
@@ -479,7 +595,7 @@ export default function MessagesPage() {
                                             </div>
                                         )}
 
-                                        {emSituation === 'time' && (
+                                        {emType === MessageTemplateResponseTypeEnum.ManualTimeChg && (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <div className="space-y-1.5">
                                                     <Label className="text-xs font-semibold text-[#8B95A1]">기존 시간</Label>
@@ -498,9 +614,9 @@ export default function MessagesPage() {
                                             </div>
                                         )}
 
-                                        {emSituation === 'delay' && (
+                                        {emType === MessageTemplateResponseTypeEnum.ManualDelay && (
                                             <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <Label className="text-xs font-semibold text-[#8B95A1]">지연 예상 시간 (분)</Label>
+                                                <Label className="text-xs font-semibold text-[#8B95A1]">지연 예상 시간 (분) (필수)</Label>
                                                 <div className="relative">
                                                     <Input type="number" min="0" placeholder="예: 15" className="rounded-xl border-red-200 focus-visible:ring-red-100 pr-10" value={emDelayMin} onChange={(e) => setEmDelayMin(e.target.value)} />
                                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">분</span>
@@ -508,7 +624,7 @@ export default function MessagesPage() {
                                             </div>
                                         )}
 
-                                        {emSituation === 'cancel' && (
+                                        {emType === MessageTemplateResponseTypeEnum.ManualCancel && (
                                             <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm font-medium flex items-start gap-2 animate-in fade-in zoom-in duration-300">
                                                 <AlertCircle className="w-5 h-5 shrink-0" />
                                                 <p>수업 취소 안내 메시지는 별도의 추가 입력 없이 자동으로 포맷에 맞게 발송됩니다. 필요한 경우 환불 안내 등은 클래스 링크를 통해 확인하도록 안내됩니다.</p>
@@ -519,16 +635,44 @@ export default function MessagesPage() {
 
                                 <Button
                                     className={`w-full py-6 rounded-2xl text-[16px] font-bold shadow-lg transition-all
-                                        ${(!emClass || !emSession || !emSituation)
+                                        ${(!isFormValid())
                                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none hover:bg-gray-100'
                                             : 'bg-red-500 text-white hover:bg-red-600 shadow-red-500/20 active:scale-[0.98]'
                                         }
                                     `}
-                                    disabled={!emClass || !emSession || !emSituation || isSending}
-                                    onClick={() => {
+                                    disabled={!isFormValid() || isSending}
+                                    onClick={async () => {
                                         setIsSending(true);
-                                        setTimeout(() => {
-                                            setIsSending(false);
+                                        try {
+                                            const variables: Record<string, string> = {};
+                                            let templateType;
+
+                                            if (emType === MessageTemplateResponseTypeEnum.ManualLocChg) {
+                                                templateType = ManualMessageRequestTemplateTypeEnum.ManualLocChg;
+                                                variables.locBefore = emLocBefore;
+                                                variables.locBeforeDetail = emLocBeforeDetail;
+                                                variables.locAfter = emLocAfter;
+                                                variables.locDetail = emLocDetail;
+                                            } else if (emType === MessageTemplateResponseTypeEnum.ManualTimeChg) {
+                                                templateType = ManualMessageRequestTemplateTypeEnum.ManualTimeChg;
+                                                variables.timeBefore = emTimeBefore;
+                                                variables.timeAfter = emTimeAfter;
+                                            } else if (emType === MessageTemplateResponseTypeEnum.ManualDelay) {
+                                                templateType = ManualMessageRequestTemplateTypeEnum.ManualDelay;
+                                                variables.delayMin = emDelayMin;
+                                            } else if (emType === MessageTemplateResponseTypeEnum.ManualCancel) {
+                                                templateType = ManualMessageRequestTemplateTypeEnum.ManualCancel;
+                                            }
+
+                                            // API 호출 (문자열인 reservationId를 안전하게 숫자로 변환)
+                                            await messageApi.sendManualMessage({
+                                                manualMessageRequest: {
+                                                    templateType: templateType!,
+                                                    variables,
+                                                    reservationIds: selectedStudentIds.map(id => Number(id))
+                                                }
+                                            });
+
                                             toast.success("긴급 메시지가 성공적으로 발송되었습니다.", {
                                                 description: `${getClassName()} 수강생들에게 알림이 전송되었습니다.`
                                             });
@@ -537,7 +681,12 @@ export default function MessagesPage() {
                                             setEmLocBefore(""); setEmLocBeforeDetail(""); setEmLocAfter(""); setEmLocDetail("");
                                             setEmTimeBefore(""); setEmTimeAfter("");
                                             setEmDelayMin("");
-                                        }, 1500);
+                                        } catch (e) {
+                                            console.error(e);
+                                            toast.error("메시지 발송에 실패했습니다.");
+                                        } finally {
+                                            setIsSending(false);
+                                        }
                                     }}
                                 >
                                     {isSending ? (

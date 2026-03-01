@@ -48,7 +48,7 @@ export function KakaoTemplatePreview({ body }: KakaoTemplatePreviewProps) {
 
               {/* Action Button */}
               <div className="bg-white border-t border-black/5 p-2.5 text-center cursor-default hover:bg-gray-50 transition-colors">
-                <span className="text-[11px] md:text-xs font-bold text-[#3182F6]">클래스 상세정보 확인하기</span>
+                <span className="text-[11px] md:text-xs font-bold text-[#3182F6]">예약 내역 보기</span>
               </div>
             </div>
           </div>
