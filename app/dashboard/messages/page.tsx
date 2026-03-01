@@ -48,7 +48,6 @@ export default function MessagesPage() {
     const [emTimeBefore, setEmTimeBefore] = useState<string>("");
     const [emTimeAfter, setEmTimeAfter] = useState<string>("");
     const [emDelayMin, setEmDelayMin] = useState<string>("");
-    const [emCustomText, setEmCustomText] = useState<string>("");
 
     const [isSending, setIsSending] = useState(false);
     const [activeTab, setActiveTab] = useState<"automated" | "emergency">("emergency");
@@ -75,12 +74,10 @@ export default function MessagesPage() {
                 return `[긴급 안내]\n\n강사 도착 지연으로 인해 ${className} 수업이 약 **${emDelayMin || '?'}**분 늦게 시작될 예정입니다.\n\n양해 부탁드립니다.`;
             case 'cancel':
                 return `[긴급 안내]\n\n금일 예정된 ${className} 수업이 부득이한 사정으로 취소되었습니다.\n\n환불 및 후속 안내는 클래스 링크를 통해 진행됩니다.\n\n**-환불 관련하여 논의하기**`;
-            case 'custom':
-                return emCustomText || "수강생이 지금 바로 알아야 할 변경 사항만\n간단히 작성해주세요.";
             default:
                 return "상황 종류를 선택하면\n미리보기가 표시됩니다.";
         }
-    }, [emSituation, emClass, emLocBefore, emLocBeforeDetail, emLocAfter, emLocDetail, emTimeBefore, emTimeAfter, emDelayMin, emCustomText]);
+    }, [emSituation, emClass, emLocBefore, emLocBeforeDetail, emLocAfter, emLocDetail, emTimeBefore, emTimeAfter, emDelayMin]);
 
     // Auto-populate location based on class selection
     useEffect(() => {
@@ -437,7 +434,6 @@ export default function MessagesPage() {
                                                 <SelectItem value="time">⏰ 시간 변경</SelectItem>
                                                 <SelectItem value="delay">⏳ 시작 지연</SelectItem>
                                                 <SelectItem value="cancel">❌ 수업 취소</SelectItem>
-                                                <SelectItem value="custom">💬 기타 안내</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -518,18 +514,6 @@ export default function MessagesPage() {
                                                 <p>수업 취소 안내 메시지는 별도의 추가 입력 없이 자동으로 포맷에 맞게 발송됩니다. 필요한 경우 환불 안내 등은 클래스 링크를 통해 확인하도록 안내됩니다.</p>
                                             </div>
                                         )}
-
-                                        {emSituation === 'custom' && (
-                                            <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
-                                                <Label className="text-xs font-semibold text-[#8B95A1]">변경 안내 사항</Label>
-                                                <Textarea
-                                                    placeholder="수강생이 지금 바로 알아야 할 변경 사항만 간단히 작성해주세요.&#10;예: 건물 엘리베이터 점검으로 인해 계단을 이용해 주시기 바랍니다."
-                                                    className="min-h-[100px] rounded-xl border-red-200 focus-visible:ring-red-100 resize-none"
-                                                    value={emCustomText}
-                                                    onChange={(e) => setEmCustomText(e.target.value)}
-                                                />
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
@@ -552,7 +536,7 @@ export default function MessagesPage() {
                                             setEmSituation("");
                                             setEmLocBefore(""); setEmLocBeforeDetail(""); setEmLocAfter(""); setEmLocDetail("");
                                             setEmTimeBefore(""); setEmTimeAfter("");
-                                            setEmDelayMin(""); setEmCustomText("");
+                                            setEmDelayMin("");
                                         }, 1500);
                                     }}
                                 >
