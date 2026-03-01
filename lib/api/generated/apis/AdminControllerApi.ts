@@ -22,6 +22,10 @@ import {
     InstructorAdminResponseToJSON,
 } from '../models/index';
 
+export interface ResetInstructorPasswordRequest {
+    instructorId: number;
+}
+
 /**
  * 
  */
@@ -68,6 +72,56 @@ export class AdminControllerApi extends runtime.BaseAPI {
     async getAllInstructors(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<InstructorAdminResponse>> {
         const response = await this.getAllInstructorsRaw(initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Creates request options for resetInstructorPassword without sending the request
+     */
+    async resetInstructorPasswordRequestOpts(requestParameters: ResetInstructorPasswordRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['instructorId'] == null) {
+            throw new runtime.RequiredError(
+                'instructorId',
+                'Required parameter "instructorId" was null or undefined when calling resetInstructorPassword().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/admin/instructors/{instructorId}/reset-password`;
+        urlPath = urlPath.replace(`{${"instructorId"}}`, encodeURIComponent(String(requestParameters['instructorId'])));
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     */
+    async resetInstructorPasswordRaw(requestParameters: ResetInstructorPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.resetInstructorPasswordRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async resetInstructorPassword(requestParameters: ResetInstructorPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.resetInstructorPasswordRaw(requestParameters, initOverrides);
     }
 
 }

@@ -21,6 +21,12 @@ import { mapValues } from '../runtime';
 export interface InstructorAdminResponse {
     /**
      * 
+     * @type {number}
+     * @memberof InstructorAdminResponse
+     */
+    instructorId?: number;
+    /**
+     * 
      * @type {string}
      * @memberof InstructorAdminResponse
      */
@@ -55,6 +61,12 @@ export interface InstructorAdminResponse {
      * @memberof InstructorAdminResponse
      */
     reservationCount?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof InstructorAdminResponse
+     */
+    profileUrl?: string;
 }
 
 /**
@@ -74,12 +86,14 @@ export function InstructorAdminResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'instructorId': json['instructorId'] == null ? undefined : json['instructorId'],
         'name': json['name'] == null ? undefined : json['name'],
         'email': json['email'] == null ? undefined : json['email'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'onedayClassCount': json['onedayClassCount'] == null ? undefined : json['onedayClassCount'],
         'sessionCount': json['sessionCount'] == null ? undefined : json['sessionCount'],
         'reservationCount': json['reservationCount'] == null ? undefined : json['reservationCount'],
+        'profileUrl': json['profileUrl'] == null ? undefined : json['profileUrl'],
     };
 }
 
@@ -94,12 +108,14 @@ export function InstructorAdminResponseToJSONTyped(value?: InstructorAdminRespon
 
     return {
         
+        'instructorId': value['instructorId'],
         'name': value['name'],
         'email': value['email'],
         'createdAt': value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
         'onedayClassCount': value['onedayClassCount'],
         'sessionCount': value['sessionCount'],
         'reservationCount': value['reservationCount'],
+        'profileUrl': value['profileUrl'],
     };
 }
 
