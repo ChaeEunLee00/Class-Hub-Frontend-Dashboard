@@ -65,19 +65,19 @@ export const messageTemplateApiMock = {
 
     // Simple mock mapping
     if (title === '예약 완료 안내') return {
-      type: MessageTemplateResponseTypeEnum.ApplyConfirmed,
+      type: MessageTemplateResponseTypeEnum.AutoApplyConfirmed,
       title,
       description: '수업 예약 직후 자동으로 발송됩니다',
       body: DEFAULT_TEMPLATES['APPLY_CONFIRMED']
     };
     if (title === 'D-3 리마인더') return {
-      type: MessageTemplateResponseTypeEnum.ReminderD3,
+      type: MessageTemplateResponseTypeEnum.AutoReminderD3,
       title,
       description: '수업 3일 전 오전 10시에 자동으로 발송됩니다',
       body: DEFAULT_TEMPLATES['D-3']
     };
     if (title === 'D-1 리마인더') return {
-      type: MessageTemplateResponseTypeEnum.ReminderD1,
+      type: MessageTemplateResponseTypeEnum.AutoReminderD1,
       title,
       description: '수업 1일 전 오전 10시에 자동으로 발송됩니다',
       body: DEFAULT_TEMPLATES['D-1']

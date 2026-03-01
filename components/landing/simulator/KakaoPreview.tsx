@@ -82,7 +82,7 @@ export const KakaoPreview = ({
                                     {msg.content}
                                 </div>
                                 <div className="bg-white rounded-[8px] p-2 shadow-sm text-center border border-black/5 cursor-pointer active:bg-gray-50 transition-colors">
-                                    <span className="text-[10px] font-bold text-[#191F28]">클래스 상세정보 확인하기</span>
+                                    <span className="text-[10px] font-bold text-[#191F28]">예약 내역 보기</span>
                                 </div>
                             </div>
                         </div>

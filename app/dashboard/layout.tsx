@@ -201,9 +201,9 @@ function DashboardContent({
                 <div className="p-4 border-t border-[#E5E8EB]">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[#6B7684] hover:bg-[#F2F4F6] transition-all duration-200"
+                        className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[#6B7684] hover:bg-[#F2F4F6] hover:text-[#F04452] transition-all duration-200 group"
                     >
-                        <LogOut className="h-5 w-5" />
+                        <LogOut className="h-5 w-5 group-hover:text-[#F04452] transition-colors" />
                         <span className="font-semibold">로그아웃</span>
                     </button>
                 </div>
@@ -220,9 +220,9 @@ function DashboardContent({
                 <h1 className="ml-3 font-bold text-[#3182F6] text-lg">Class Hub</h1>
             </div>
 
-            {/* 메인 컨텐츠 영역 */}
-            <div className="md:pl-72 pt-16 md:pt-0 min-h-screen">
-                <main className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+            {/* 기기별 메인 컨텐츠 영역 */}
+            <div className="md:pl-72 pt-16 md:pt-0 min-h-screen relative">
+                <main className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 pb-24">
                     {children}
                 </main>
             </div>

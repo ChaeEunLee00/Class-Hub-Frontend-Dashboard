@@ -45,18 +45,6 @@ export default function AdminPage() {
     router.push("/");
   };
 
-  const handleResetPassword = async (instructorId: number) => {
-    if (!confirm("해당 강사의 비밀번호를 재설정하시겠습니까?")) return;
-
-    try {
-      await api.admin.resetInstructorPassword({ instructorId });
-      toast.success("재설정 되었습니다.");
-    } catch (error) {
-      console.error("Failed to reset password", error);
-      toast.error("비밀번호 재설정에 실패했습니다.");
-    }
-  };
-
   const filteredInstructors = instructors.filter(i =>
     (i.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (i.email || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -207,15 +195,7 @@ export default function AdminPage() {
                       <TableCell className="text-center text-[#4E5968] font-medium">{instructor.reservationCount || 0}</TableCell>
                       <TableCell className="pr-8 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 text-xs border-gray-200 text-[#4E5968] hover:text-[#3182F6] hover:border-[#3182F6]"
-                            onClick={() => instructor.instructorId != null && handleResetPassword(instructor.instructorId)}
-                          >
-                            <RotateCcw className="w-3 h-3 mr-1" />
-                            재설정
-                          </Button>
+
                           <Button size="icon" variant="ghost" className="h-8 w-8 text-[#8B95A1] hover:text-[#3182F6]">
                             <Settings className="w-4 h-4" />
                           </Button>

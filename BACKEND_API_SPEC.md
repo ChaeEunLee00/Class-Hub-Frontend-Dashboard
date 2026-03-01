@@ -181,3 +181,89 @@ The API should return objects with the following fields. Fields marked with `?` 
   "accessToken": "..."  // string (JWT Token)
 }
 ```
+
+---
+
+## 5. Message Sending (Simulator)
+
+**Base URL**: `/api/messages`
+
+API to handle manual message sending triggered by the instructor via the Dashboard Simulator.
+
+### DTO: `SendMessageRequest`
+
+```json
+{
+  "classId": "string",
+  "sessionId": "string",          // Optional (if sending to specific session)
+  "recipientIds": ["string"],     // Array of student IDs (empty for ALL)
+  "title": "string",              // Message title/type (e.g., "[긴급 안내] 장소 변경")
+  "content": "string"             // Full message text
+}
+```
+
+### Endpoints
+
+#### `POST /api/messages/send`
+
+* **Request Body**: `SendMessageRequest`
+* **Response**:
+    ```json
+    {
+      "success": true,
+      "sentCount": 4
+    }
+    ```
+
+---
+
+## 6. Message History
+
+**Base URL**: `/api/messages/history`
+
+API to fetch the history of sent messages for the instructor's dashboard.
+
+### DTO: `MessageHistoryItem`
+
+```json
+{
+  "id": "string",
+  "type": "string",                   // e.g., "장소 변경", "D-1 리마인더"
+  "status": "SUCCESS" | "FAIL",
+  "recipientsSummary": "string",      // e.g., "홍길동 외 2명", "전체(4명)"
+  "content": "string",                // Full text of the message sent
+  "sentAt": "2024-02-04T14:30:00"     // ISO datetime string
+}
+```
+
+### Endpoints
+
+#### `GET /api/messages/history`
+
+* **Description**: Fetches the message history for the currently authenticated instructor.
+* **Query Params**: `?page=0&size=20` (Optional, for pagination)
+* **Response**: `List<MessageHistoryItem>`
+
+---
+
+## 7. Students / Session Attendees
+
+**Base URL**: `/api/sessions/{sessionId}/students`
+
+API to fetch the list of students enrolled in a specific session, used to populate the recipient selection list in the Message Simulator.
+
+### DTO: `StudentInfo`
+
+```json
+{
+  "id": "string",
+  "name": "string",
+  "phone": "string"
+}
+```
+
+### Endpoints
+
+#### `GET /api/sessions/{sessionId}/students`
+
+* **Response**: `List<StudentInfo>`

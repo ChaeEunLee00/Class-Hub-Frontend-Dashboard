@@ -50,9 +50,13 @@ export interface MessageTemplateResponse {
  * @export
  */
 export const MessageTemplateResponseTypeEnum = {
-    ApplyConfirmed: 'APPLY_CONFIRMED',
-    ReminderD3: 'REMINDER_D3',
-    ReminderD1: 'REMINDER_D1'
+    AutoApplyConfirmed: 'AUTO_APPLY_CONFIRMED',
+    AutoReminderD3: 'AUTO_REMINDER_D3',
+    AutoReminderD1: 'AUTO_REMINDER_D1',
+    ManualLocChg: 'MANUAL_LOC_CHG',
+    ManualTimeChg: 'MANUAL_TIME_CHG',
+    ManualDelay: 'MANUAL_DELAY',
+    ManualCancel: 'MANUAL_CANCEL'
 } as const;
 export type MessageTemplateResponseTypeEnum = typeof MessageTemplateResponseTypeEnum[keyof typeof MessageTemplateResponseTypeEnum];
 

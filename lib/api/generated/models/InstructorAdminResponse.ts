@@ -21,12 +21,6 @@ import { mapValues } from '../runtime';
 export interface InstructorAdminResponse {
     /**
      * 
-     * @type {number}
-     * @memberof InstructorAdminResponse
-     */
-    instructorId?: number;
-    /**
-     * 
      * @type {string}
      * @memberof InstructorAdminResponse
      */
@@ -80,7 +74,6 @@ export function InstructorAdminResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'instructorId': json['instructorId'] == null ? undefined : json['instructorId'],
         'name': json['name'] == null ? undefined : json['name'],
         'email': json['email'] == null ? undefined : json['email'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
@@ -101,7 +94,6 @@ export function InstructorAdminResponseToJSONTyped(value?: InstructorAdminRespon
 
     return {
         
-        'instructorId': value['instructorId'],
         'name': value['name'],
         'email': value['email'],
         'createdAt': value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),

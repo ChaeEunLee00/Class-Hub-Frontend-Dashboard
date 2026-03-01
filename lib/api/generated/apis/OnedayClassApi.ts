@@ -47,6 +47,10 @@ export interface GetClassSessions1Request {
     classId: number;
 }
 
+export interface GetUpcomingSessionsRequest {
+    classId: number;
+}
+
 export interface UpdateClassRequest {
     classId: number;
     onedayClassCreateRequest: OnedayClassCreateRequest;
@@ -327,6 +331,61 @@ export class OnedayClassApi extends runtime.BaseAPI {
      */
     async getMyClasses(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<OnedayClassResponse>> {
         const response = await this.getMyClassesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for getUpcomingSessions without sending the request
+     */
+    async getUpcomingSessionsRequestOpts(requestParameters: GetUpcomingSessionsRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['classId'] == null) {
+            throw new runtime.RequiredError(
+                'classId',
+                'Required parameter "classId" was null or undefined when calling getUpcomingSessions().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/classes/{classId}/sessions/upcoming`;
+        urlPath = urlPath.replace(`{${"classId"}}`, encodeURIComponent(String(requestParameters['classId'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * 특정 클래스의 오늘 이후 세션만 조회합니다
+     * 클래스의 다가오는 세션 목록 조회
+     */
+    async getUpcomingSessionsRaw(requestParameters: GetUpcomingSessionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SessionResponse>>> {
+        const requestOptions = await this.getUpcomingSessionsRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SessionResponseFromJSON));
+    }
+
+    /**
+     * 특정 클래스의 오늘 이후 세션만 조회합니다
+     * 클래스의 다가오는 세션 목록 조회
+     */
+    async getUpcomingSessions(requestParameters: GetUpcomingSessionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SessionResponse>> {
+        const response = await this.getUpcomingSessionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

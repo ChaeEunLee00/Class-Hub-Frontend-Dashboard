@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageCircle } from "lucide-react";
 import { api } from "@/lib/api";
 import { getErrorMessage, validateEmail } from "@/lib/utils";
 
@@ -129,7 +130,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 text-center space-y-4">
             <p className="text-sm text-[#6B7684]">
               계정이 없으신가요?{" "}
               <Link href="/signup" className="text-[#3182F6] hover:underline font-semibold">
@@ -139,6 +140,22 @@ export default function LoginPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 외부 지원 채팅방 플로팅 버튼 */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <a
+          href="https://open.kakao.com/o/smZhnnhi"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center justify-center w-12 h-12 bg-white text-[#4E5968] rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100/80 hover:text-[#191F28] hover:bg-gray-50 transition-all duration-300 hover:-translate-y-1 active:scale-95 relative"
+          aria-label="강사 지원 카카오톡 문의"
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span className="absolute right-full mr-4 px-3.5 py-2 bg-[#191F28] text-white text-[13px] font-medium rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-sm">
+            강사 지원 카카오톡 1:1 문의
+          </span>
+        </a>
+      </div>
     </div>
   );
 }

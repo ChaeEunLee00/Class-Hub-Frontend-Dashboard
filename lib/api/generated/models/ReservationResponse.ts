@@ -56,6 +56,12 @@ export interface ReservationResponse {
      */
     reservationStatus?: string;
     /**
+     * 출석 상태
+     * @type {string}
+     * @memberof ReservationResponse
+     */
+    attendanceStatus?: string;
+    /**
      * D-3 알림 발송 여부
      * @type {boolean}
      * @memberof ReservationResponse
@@ -92,6 +98,7 @@ export function ReservationResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'appliedAt': json['appliedAt'] == null ? undefined : (new Date(json['appliedAt'])),
         'reservationStatus': json['reservationStatus'] == null ? undefined : json['reservationStatus'],
+        'attendanceStatus': json['attendanceStatus'] == null ? undefined : json['attendanceStatus'],
         'sentD3Notification': json['sentD3Notification'] == null ? undefined : json['sentD3Notification'],
         'sentD1Notification': json['sentD1Notification'] == null ? undefined : json['sentD1Notification'],
     };
@@ -114,6 +121,7 @@ export function ReservationResponseToJSONTyped(value?: ReservationResponse | nul
         'phoneNumber': value['phoneNumber'],
         'appliedAt': value['appliedAt'] == null ? value['appliedAt'] : value['appliedAt'].toISOString(),
         'reservationStatus': value['reservationStatus'],
+        'attendanceStatus': value['attendanceStatus'],
         'sentD3Notification': value['sentD3Notification'],
         'sentD1Notification': value['sentD1Notification'],
     };

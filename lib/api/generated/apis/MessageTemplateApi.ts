@@ -29,6 +29,10 @@ export interface GetTemplateRequest {
     title: string;
 }
 
+export interface GetTemplatesRequest {
+    type?: string;
+}
+
 /**
  * 
  */
@@ -92,8 +96,12 @@ export class MessageTemplateApi extends runtime.BaseAPI {
     /**
      * Creates request options for getTemplates without sending the request
      */
-    async getTemplatesRequestOpts(): Promise<runtime.RequestOpts> {
+    async getTemplatesRequestOpts(requestParameters: GetTemplatesRequest): Promise<runtime.RequestOpts> {
         const queryParameters: any = {};
+
+        if (requestParameters['type'] != null) {
+            queryParameters['type'] = requestParameters['type'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -117,22 +125,22 @@ export class MessageTemplateApi extends runtime.BaseAPI {
     }
 
     /**
-     * 전체 메시지 템플릿 목록을 조회합니다
+     * type 파라미터로 필터링: auto(자동발송), manual(수동발송), 미지정시 전체 조회
      * 템플릿 목록 조회
      */
-    async getTemplatesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<MessageTemplateMetadata>>> {
-        const requestOptions = await this.getTemplatesRequestOpts();
+    async getTemplatesRaw(requestParameters: GetTemplatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<MessageTemplateMetadata>>> {
+        const requestOptions = await this.getTemplatesRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(MessageTemplateMetadataFromJSON));
     }
 
     /**
-     * 전체 메시지 템플릿 목록을 조회합니다
+     * type 파라미터로 필터링: auto(자동발송), manual(수동발송), 미지정시 전체 조회
      * 템플릿 목록 조회
      */
-    async getTemplates(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<MessageTemplateMetadata>> {
-        const response = await this.getTemplatesRaw(initOverrides);
+    async getTemplates(requestParameters: GetTemplatesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<MessageTemplateMetadata>> {
+        const response = await this.getTemplatesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

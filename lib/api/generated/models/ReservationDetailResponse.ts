@@ -103,6 +103,12 @@ export interface ReservationDetailResponse {
      * @memberof ReservationDetailResponse
      */
     reservationStatus?: string;
+    /**
+     * 출석 상태
+     * @type {string}
+     * @memberof ReservationDetailResponse
+     */
+    attendanceStatus?: string;
 }
 
 /**
@@ -136,6 +142,7 @@ export function ReservationDetailResponseFromJSONTyped(json: any, ignoreDiscrimi
         'currentNum': json['currentNum'] == null ? undefined : json['currentNum'],
         'sessionStatus': json['sessionStatus'] == null ? undefined : json['sessionStatus'],
         'reservationStatus': json['reservationStatus'] == null ? undefined : json['reservationStatus'],
+        'attendanceStatus': json['attendanceStatus'] == null ? undefined : json['attendanceStatus'],
     };
 }
 
@@ -164,6 +171,7 @@ export function ReservationDetailResponseToJSONTyped(value?: ReservationDetailRe
         'currentNum': value['currentNum'],
         'sessionStatus': value['sessionStatus'],
         'reservationStatus': value['reservationStatus'],
+        'attendanceStatus': value['attendanceStatus'],
     };
 }
 

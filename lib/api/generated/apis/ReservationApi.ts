@@ -16,7 +16,6 @@
 import * as runtime from '../runtime';
 import type {
   OnedayClassResponse,
-  ReservationCreateResponse,
   ReservationDetailResponse,
   ReservationRequest,
   ReservationResponse,
@@ -25,8 +24,6 @@ import type {
 import {
     OnedayClassResponseFromJSON,
     OnedayClassResponseToJSON,
-    ReservationCreateResponseFromJSON,
-    ReservationCreateResponseToJSON,
     ReservationDetailResponseFromJSON,
     ReservationDetailResponseToJSON,
     ReservationRequestFromJSON,
@@ -59,6 +56,10 @@ export interface GetReservationsRequest {
 
 export interface GetReservationsByClassCodeRequest {
     classCode: string;
+}
+
+export interface MarkPresentRequest {
+    reservationCode: string;
 }
 
 export interface ReserveRequest {
@@ -406,6 +407,60 @@ export class ReservationApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates request options for markPresent without sending the request
+     */
+    async markPresentRequestOpts(requestParameters: MarkPresentRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['reservationCode'] == null) {
+            throw new runtime.RequiredError(
+                'reservationCode',
+                'Required parameter "reservationCode" was null or undefined when calling markPresent().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/reservations/{reservationCode}/attendance/present`;
+        urlPath = urlPath.replace(`{${"reservationCode"}}`, encodeURIComponent(String(requestParameters['reservationCode'])));
+
+        return {
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * 예약 코드로 출석 상태를 PRESENT로 변경합니다
+     * 출석 체크
+     */
+    async markPresentRaw(requestParameters: MarkPresentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.markPresentRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 예약 코드로 출석 상태를 PRESENT로 변경합니다
+     * 출석 체크
+     */
+    async markPresent(requestParameters: MarkPresentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.markPresentRaw(requestParameters, initOverrides);
+    }
+
+    /**
      * Creates request options for reserve without sending the request
      */
     async reserveRequestOpts(requestParameters: ReserveRequest): Promise<runtime.RequestOpts> {
@@ -457,18 +512,22 @@ export class ReservationApi extends runtime.BaseAPI {
      * 원데이클래스 예약을 생성합니다
      * 예약 생성
      */
-    async reserveRaw(requestParameters: ReserveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationCreateResponse>> {
+    async reserveRaw(requestParameters: ReserveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
         const requestOptions = await this.reserveRequestOpts(requestParameters);
         const response = await this.request(requestOptions, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationCreateResponseFromJSON(jsonValue));
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
      * 원데이클래스 예약을 생성합니다
      * 예약 생성
      */
-    async reserve(requestParameters: ReserveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationCreateResponse> {
+    async reserve(requestParameters: ReserveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.reserveRaw(requestParameters, initOverrides);
         return await response.value();
     }
