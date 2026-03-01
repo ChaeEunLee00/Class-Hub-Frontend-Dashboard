@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Menu, X, LogOut, Calendar, MessageSquare, Settings } from "lucide-react";
+import { Menu, X, LogOut, Calendar, MessageSquare, Settings, CreditCard } from "lucide-react";
 import { api } from "@/lib/api";
 import type { User } from "@/lib/api/types";
 
@@ -180,6 +180,20 @@ function DashboardContent({
                         >
                             <MessageSquare className="h-5 w-5" />
                             <span className="font-semibold">메시지 센터</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                router.push("/dashboard/settlement");
+                                setSidebarOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 ${isActive("/dashboard/settlement")
+                                ? "bg-[#E8F3FF] text-[#3182F6]"
+                                : "text-[#4E5968] hover:bg-[#F2F4F6]"
+                                }`}
+                        >
+                            <CreditCard className="h-5 w-5" />
+                            <span className="font-semibold">정산 관리</span>
                         </button>
 
                         <button

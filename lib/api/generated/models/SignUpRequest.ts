@@ -43,6 +43,12 @@ export interface SignUpRequest {
      * @memberof SignUpRequest
      */
     password: string;
+    /**
+     * 프로필 URL
+     * @type {string}
+     * @memberof SignUpRequest
+     */
+    profileUrl?: string;
 }
 
 /**
@@ -70,6 +76,7 @@ export function SignUpRequestFromJSONTyped(json: any, ignoreDiscriminator: boole
         'email': json['email'],
         'phoneNumber': json['phoneNumber'],
         'password': json['password'],
+        'profileUrl': json['profileUrl'] == null ? undefined : json['profileUrl'],
     };
 }
 
@@ -88,6 +95,7 @@ export function SignUpRequestToJSONTyped(value?: SignUpRequest | null, ignoreDis
         'email': value['email'],
         'phoneNumber': value['phoneNumber'],
         'password': value['password'],
+        'profileUrl': value['profileUrl'],
     };
 }
 

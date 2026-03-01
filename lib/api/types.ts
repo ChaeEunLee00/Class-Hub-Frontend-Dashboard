@@ -14,6 +14,7 @@ export interface User {
   phoneNumber?: string;
   role?: string;
   createdAt: string;
+  profileUrl?: string;
 }
 
 // ============================================================

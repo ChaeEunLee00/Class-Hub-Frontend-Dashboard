@@ -28,6 +28,7 @@ function SignUpForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [profileUrl, setProfileUrl] = useState("");
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
@@ -94,7 +95,8 @@ function SignUpForm() {
 
     try {
       // 회원가입
-      await api.auth.signUp({ signUpRequest: { email, name, password, phoneNumber } });
+      // 회원가입
+      await api.auth.signUp({ signUpRequest: { email, name, password, phoneNumber, profileUrl } });
     } catch (err: any) {
       const message = await getErrorMessage(err, "회원가입에 실패했습니다.");
       setError(message);
@@ -184,6 +186,17 @@ function SignUpForm() {
               {validationErrors.phoneNumber && (
                 <p className="text-xs text-[#F04452] font-medium mt-1">{validationErrors.phoneNumber}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="profileUrl">프로필 링크 (선택)</Label>
+              <Input
+                id="profileUrl"
+                type="url"
+                placeholder="https://yourlink.com"
+                value={profileUrl}
+                onChange={(e) => setProfileUrl(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">

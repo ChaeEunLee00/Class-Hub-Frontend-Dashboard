@@ -181,6 +181,7 @@ export default function ClassesPage() {
             imageUrls: data.imageUrls,
             parkingInfo: data.parkingInfo,
             cancellationPolicy: data.cancellationPolicy,
+            profileUrl: user?.profileUrl,
         });
         // Note: Dialog opening is now handled in CreateClassForm button click
     };

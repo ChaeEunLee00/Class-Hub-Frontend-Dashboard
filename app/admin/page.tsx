@@ -187,7 +187,14 @@ export default function AdminPage() {
                 ) : filteredInstructors.length > 0 ? (
                   filteredInstructors.map((instructor, index) => (
                     <TableRow key={index} className="hover:bg-gray-50/30 transition-colors">
-                      <TableCell className="font-medium text-[#191F28] py-5 pl-8">{instructor.name || '-'}</TableCell>
+                      <TableCell className="font-medium text-[#191F28] py-5 pl-8">
+                        <button
+                          className="hover:text-blue-600 hover:underline transition-colors"
+                          onClick={() => instructor.instructorId != null && router.push(`/admin/settlement/${instructor.instructorId}`)}
+                        >
+                          {instructor.name || '-'}
+                        </button>
+                      </TableCell>
                       <TableCell className="text-[#4E5968]">{instructor.email || '-'}</TableCell>
                       <TableCell className="text-[#4E5968]">
                         {instructor.createdAt ? new Date(instructor.createdAt).toLocaleString('ko-KR', {

@@ -11,4 +11,5 @@ export * from './MessageWebhookControllerApi';
 export * from './OnedayClassApi';
 export * from './ReservationApi';
 export * from './SessionApi';
+export * from './SettlementControllerApi';
 export * from './UploadApi';

@@ -16,6 +16,7 @@ export class LocalAuthApi extends AuthApi implements AuthServiceInterface {
             phoneNumber: response.phoneNumber || '',
             role: response.role?.toLowerCase() || '',
             createdAt: new Date().toISOString(), // Server doesn't return this in LoginResponse
+            profileUrl: response.profileUrl || '',
         };
 
         if (typeof window !== 'undefined') {

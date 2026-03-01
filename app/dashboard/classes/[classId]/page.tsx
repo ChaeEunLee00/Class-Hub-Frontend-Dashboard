@@ -141,6 +141,7 @@ export default function ClassDetailPage({ params }: { params: Promise<{ classId:
             imageUrls: data.imageUrls,
             parkingInfo: data.parkingInfo,
             cancellationPolicy: data.cancellationPolicy,
+            profileUrl: user?.profileUrl,
         });
     };
 

@@ -43,6 +43,12 @@ export interface LoginResponse {
      * @memberof LoginResponse
      */
     role?: LoginResponseRoleEnum;
+    /**
+     * 프로필 URL
+     * @type {string}
+     * @memberof LoginResponse
+     */
+    profileUrl?: string;
 }
 
 
@@ -77,6 +83,7 @@ export function LoginResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         'name': json['name'] == null ? undefined : json['name'],
         'phoneNumber': json['PhoneNumber'] == null ? undefined : json['PhoneNumber'],
         'role': json['role'] == null ? undefined : json['role'],
+        'profileUrl': json['profileUrl'] == null ? undefined : json['profileUrl'],
     };
 }
 
@@ -95,6 +102,7 @@ export function LoginResponseToJSONTyped(value?: LoginResponse | null, ignoreDis
         'name': value['name'],
         'PhoneNumber': value['phoneNumber'],
         'role': value['role'],
+        'profileUrl': value['profileUrl'],
     };
 }
 

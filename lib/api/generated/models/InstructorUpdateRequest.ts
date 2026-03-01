@@ -43,6 +43,12 @@ export interface InstructorUpdateRequest {
      * @memberof InstructorUpdateRequest
      */
     password?: string;
+    /**
+     * 프로필 URL
+     * @type {string}
+     * @memberof InstructorUpdateRequest
+     */
+    profileUrl?: string;
 }
 
 /**
@@ -66,6 +72,7 @@ export function InstructorUpdateRequestFromJSONTyped(json: any, ignoreDiscrimina
         'email': json['email'] == null ? undefined : json['email'],
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'password': json['password'] == null ? undefined : json['password'],
+        'profileUrl': json['profileUrl'] == null ? undefined : json['profileUrl'],
     };
 }
 
@@ -84,6 +91,7 @@ export function InstructorUpdateRequestToJSONTyped(value?: InstructorUpdateReque
         'email': value['email'],
         'phoneNumber': value['phoneNumber'],
         'password': value['password'],
+        'profileUrl': value['profileUrl'],
     };
 }
 

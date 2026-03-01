@@ -24,6 +24,7 @@ export default function ProfilePage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
+    const [profileUrl, setProfileUrl] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +41,8 @@ export default function ProfilePage() {
                 setName(user.name ?? '');
                 setEmail(user.email);
                 setPhone(user.phoneNumber || '');
+                setProfileUrl(user.profileUrl || '');
+                console.log('정보', user.profileUrl);
             } else {
                 router.push('/login');
             }
@@ -62,6 +65,7 @@ export default function ProfilePage() {
             const updateData: any = {
                 name,
                 phoneNumber: phone,
+                profileUrl: profileUrl,
             };
 
             // 비밀번호를 입력한 경우에만 포함
@@ -81,6 +85,7 @@ export default function ProfilePage() {
                     ...currentUser,
                     name,
                     phoneNumber: phone,
+                    profileUrl: profileUrl,
                 };
                 localStorage.setItem('classhub_auth_user', JSON.stringify(updatedUser));
             }
@@ -135,6 +140,16 @@ export default function ProfilePage() {
                                 type="tel"
                                 maxLength={13}
                                 required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="profile-url">프로필 링크 (선택)</Label>
+                            <Input
+                                id="profile-url"
+                                value={profileUrl}
+                                onChange={(e) => setProfileUrl(e.target.value)}
+                                type="url"
+                                placeholder="https://yourlink.com"
                             />
                         </div>
                         <div className="space-y-2">

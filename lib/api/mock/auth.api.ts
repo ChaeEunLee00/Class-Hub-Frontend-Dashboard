@@ -44,13 +44,14 @@ export const authApiMock: AuthServiceInterface = {
             userId: user.id.includes('_') ? parseInt(user.id.split('_')[1]) : 1,
             name: user.name,
             phoneNumber: user.phoneNumber,
-            role: user.role === 'admin' ? 'ADMIN' : 'USER'
+            role: user.role === 'admin' ? 'ADMIN' : 'USER',
+            profileUrl: user.profileUrl
         } as LoginResponse;
     },
 
     async signUp(requestParameters: SignUpOperationRequest): Promise<number> {
         await delay(500);
-        const { email, name, password, phoneNumber } = requestParameters.signUpRequest;
+        const { email, name, password, phoneNumber, profileUrl } = requestParameters.signUpRequest;
         const users = getUsers();
 
         if (users.find(u => u.email === email)) {
@@ -64,6 +65,7 @@ export const authApiMock: AuthServiceInterface = {
             phoneNumber,
             role: 'instructor',
             createdAt: new Date().toISOString(),
+            profileUrl,
         };
 
         users.push(newUser);

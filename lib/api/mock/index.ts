@@ -10,3 +10,4 @@ export { instructorApiMock } from './instructor-api';
 export { adminApiMock } from './admin.api';
 export { initializeDemoData } from './demo-data';
 export { uploadImageApiMock } from './upload-image.api';
+export { settlementApiMock } from './settlement.api';
