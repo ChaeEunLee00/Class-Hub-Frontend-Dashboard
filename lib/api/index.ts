@@ -24,8 +24,8 @@ import {
 import { LocalAuthApi } from './LocalAuthApi';
 import { UploadImageApi } from './UploadImageApi';
 import { apiConfig } from './config/generated-client';
-import { InstructorApi, AdminControllerApi, MessageTemplateApi, OnedayClassApi, SessionApi, MemberApi, ReservationApi, MessageApi } from './generated';
-export { type InstructorAdminResponse, type MessageTemplateMetadata, type MessageTemplateResponse, MessageTemplateResponseTypeEnum, type OnedayClassResponse, type SessionResponse, type LocalTime, type ReservationResponse, type MemberResponseDto, ManualMessageRequestTemplateTypeEnum, type MessageHistoryResponse, MessageHistoryResponseStatusEnum } from './generated';
+import { InstructorApi, AdminControllerApi, MessageTemplateApi, OnedayClassApi, SessionApi, MemberApi, ReservationApi, MessageApi, SettlementControllerApi } from './generated';
+export { type InstructorAdminResponse, type MessageTemplateMetadata, type MessageTemplateResponse, MessageTemplateResponseTypeEnum, type OnedayClassResponse, type OnedayClassDetailResponse, type SessionResponse, type LocalTime, type ReservationResponse, type MemberResponseDto, ManualMessageRequestTemplateTypeEnum, type MessageHistoryResponse, MessageHistoryResponseStatusEnum, type SettlementResponse, type SettlementSummaryResponse, SettlementResponseStatusEnum } from './generated';
 export type { UploadResult } from './UploadImageApi';
 export type { GetTemplateRequest } from './generated';
 
