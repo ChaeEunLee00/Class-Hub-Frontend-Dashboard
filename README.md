@@ -34,8 +34,9 @@
 - **Data Fetching**: OpenAPI Generator 기반 Typed Fetch Client
 - **Charts & Animations**: Recharts, Framer Motion
 
-### DevOps
+### DevOps & Monitoring
 - **Deployment**: Vercel
+- **Error Tracking**: Sentry (`@sentry/nextjs`)
 
 ---
 
@@ -57,6 +58,52 @@
 
 ---
 
+## 🚀 시작하기 (Getting Started)
+
+### 1. 프로젝트 클론 및 의존성 설치
+
+```bash
+# 의존성 설치
+npm install
+```
+
+### 2. 환경 변수 설정 (.env.local)
+
+프로젝트 루트 디렉토리에 `.env.local` 파일을 생성하여 필요한 환경 변수를 설정합니다.
+
+```env
+# 1. 백엔드 API 주소 (실제 서버 연동 시 사용)
+NEXT_PUBLIC_BACKEND_API_URL=http://localhost:8080
+
+# 2. API 모드 설정 (true: Mock API 사용 / false: 실제 서버 API 사용)
+NEXT_PUBLIC_USE_MOCK=true
+```
+
+> **Note**: 본 프로젝트는 개발 편의성을 위해 기본적으로 **Mock API** 모드로 동작합니다. 실제 백엔드 서버(`API_URL`)와 연동하여 개발 및 테스트를 하려면 `NEXT_PUBLIC_USE_MOCK`을 `false`로 변경하세요.
+
+### 3. 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+터미널에 안내된 URL ([http://localhost:3000](http://localhost:3000))을 브라우저에서 열어 애플리케이션을 확인합니다.
+
+---
+
+## 🔌 API 개발 환경 가이드
+
+본 프로젝트는 두 가지 API 통신 모드를 지원하여 유연한 개발을 돕습니다:
+
+1. **Mock API 모드 (`NEXT_PUBLIC_USE_MOCK=true`)**
+   * 브라우저의 전역 상태나 `localStorage` 등을 임시 활용하여 CRUD 테스트가 가능하며, 화면 UI/UX 개발에 집중할 때 유용합니다.
+
+2. **Real API 모드 (`NEXT_PUBLIC_USE_MOCK=false`)**
+   * 설정된 `NEXT_PUBLIC_BACKEND_API_URL`을 Base URL로 실제 백엔드 API 서버와 HTTP 통신을 수행합니다.
+   
+
+---
+
 ## 📂 디렉토리 구조 (Directory Structure)
 
 ```text
@@ -73,6 +120,16 @@ com.classhub.dashboard
  ┣ 📂 public         # 폰트, 로고(og-image), 아이콘 등 정적 에셋 라이브러리
  ┗ 📂 utils          # 날짜 포맷팅, 유효성 검증 공통 유틸 함수
 ```
+
+---
+
+## 🐛 에러 모니터링 (Sentry)
+
+생태계의 안정성과 버그의 빠른 패치를 위해 Sentry 모니터링이 연동되어 있습니다.
+* 클라이언트, 모서리(Edge), 서버 구동 등 Next.js 전반에서 발생하는 예외를 모두 추적합니다.
+* `sentry.*.config.ts` 파일과 `instrumentation.ts` 매커니즘을 통해 환경별 초기화 로직이 동작합니다.
+* 프로덕션 빌드 및 배포 시, Sentry 인증 정보 및 DSN 등이 적절하게 세팅되어야 원활한 기능 동작을 보장할 수 있습니다.
+
 
 ---
 
