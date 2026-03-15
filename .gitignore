@@ -49,3 +49,6 @@ next-env.d.ts
 lib/api/generated/docs
 lib/api/generated/.openapi-generator
 lib/api/generated/.openapi-generator-ignore
+
+# Sentry Config File
+.env.sentry-build-plugin
